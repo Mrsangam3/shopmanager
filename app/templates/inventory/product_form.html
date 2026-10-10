@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if product else 'New' }} product · ShopManager{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm"><div class="card-body">
+      <h4 class="mb-3">{{ 'Edit product' if product else 'Add product' }}</h4>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row">
+          <div class="col-md-8 mb-3">
+            <label class="form-label">Name</label>
+            <input name="name" class="form-control" value="{{ values.get('name', '') }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">SKU</label>
+            <input name="sku" class="form-control" value="{{ values.get('sku', '') }}" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Category</label>
+          <select name="category_id" class="form-select">
+            <option value="">— none —</option>
+            {% for c in categories %}
+            <option value="{{ c.id }}" {{ 'selected' if values.get('category_id')|string == c.id|string }}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="col-6 mb-3">
+            <label class="form-label">Selling price</label>
+            <input name="price" type="number" step="0.01" min="0" class="form-control" value="{{ values.get('price', '') }}" required>
+          </div>
+          <div class="col-6 mb-3">
+            <label class="form-label">Cost price</label>
+            <input name="cost" type="number" step="0.01" min="0" class="form-control" value="{{ values.get('cost', '') }}" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-6 mb-3">
+            <label class="form-label">Quantity in stock</label>
+            <input name="quantity" type="number" min="0" class="form-control" value="{{ values.get('quantity', 0) }}" required>
+          </div>
+          <div class="col-6 mb-3">
+            <label class="form-label">Reorder level</label>
+            <input name="reorder_level" type="number" min="0" class="form-control" value="{{ values.get('reorder_level', 5) }}" required>
+          </div>
+        </div>
+
+        <button class="btn btn-primary">Save</button>
+        <a class="btn btn-link" href="{{ url_for('inventory.products') }}">Cancel</a>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %} 

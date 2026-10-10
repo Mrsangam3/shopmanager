@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Sales · ShopManager{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Sales</h4>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('sales.new_sale') }}">+ New sale</a>
+</div>
+
+<div class="table-responsive">
+<table class="table table-sm table-hover bg-white align-middle">
+  <thead>
+    <tr><th>Invoice</th><th>Date</th><th>Cashier</th><th>Customer</th>
+        <th class="text-end">Total</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for s in pagination.items %}
+    <tr>
+      <td>INV-{{ '%06d'|format(s.id) }}</td>
+      <td>{{ s.created_at|localtime }}</td>
+      <td>{{ s.user.name }}</td>
+      <td>{{ s.customer_name or '—' }}</td>
+      <td class="text-end">{{ "{:,.2f}".format(s.total) }}</td>
+      <td class="text-end">
+        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('sales.invoice', sale_id=s.id) }}">View</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-center text-muted py-4">No sales yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav>
+  <ul class="pagination pagination-sm">
+    {% for p in pagination.iter_pages() %}
+      {% if p %}
+      <li class="page-item {{ 'active' if p == pagination.page }}">
+        <a class="page-link" href="{{ url_for('sales.history', page=p) }}">{{ p }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Employees · ShopManager{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <h4>Team</h4>
+    <table class="table table-sm bg-white">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm"><div class="card-body">
+      <h5>Add employee</h5>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input class="form-control mb-2" name="name" placeholder="Full name" required>
+        <input class="form-control mb-2" type="email" name="email" placeholder="Email" required>
+        <input class="form-control mb-2" type="password" name="password" placeholder="Password (min 8)" required>
+        <select class="form-select mb-3" name="role">
+          {% for r in roles %}<option value="{{ r }}">{{ r|capitalize }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-primary w-100">Add</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

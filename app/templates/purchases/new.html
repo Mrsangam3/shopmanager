@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Receive stock · ShopManager{% endblock %}
+{% block content %}
+<div class="row g-4">
+
+  <div class="col-lg-5">
+    <h5>Products</h5>
+    <input id="search" class="form-control mb-2" placeholder="Search name or SKU" autofocus>
+    <div id="product-list" class="list-group" style="max-height: 60vh; overflow-y: auto;"></div>
+  </div>
+
+  <div class="col-lg-7">
+    <h5>Delivery</h5>
+    <form method="post" id="purchase-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <select name="supplier_id" class="form-select mb-3" required>
+        <option value="">Choose supplier…</option>
+        {% for s in suppliers %}
+        <option value="{{ s.id }}" {{ 'selected' if selected_supplier == s.id }}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+
+      <table class="table table-sm bg-white align-middle">
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Unit cost</th><th class="text-end">Total</th><th></th></tr>
+        </thead>
+        <tbody id="cart-body"></tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="text-end">Grand total</th>
+            <th class="text-end" id="total">0.00</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+      <button id="submit-btn" class="btn btn-success w-100" disabled>Record purchase</button>
+    </form>
+  </div>
+</div>
+
+<script id="products-data" type="application/json">{{ products|tojson|safe }}</script>
+<script id="prefill-data" type="application/json">{{ prefill|tojson|safe }}</script>
+<script>
+  const PRODUCTS = JSON.parse(document.getElementById("products-data").textContent || "[]");
+  const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+  // cart restored after a failed submit; drop unknown products
+  let cart = JSON.parse(document.getElementById("prefill-data").textContent || "[]")
+    .map(l => ({ id: Number(l.id), qty: parseInt(l.qty, 10) || 1, cost: String(l.cost) }))
+    .filter(l => byId[l.id]);
+
+  const listEl = document.getElementById("product-list");
+  const cartBody = document.getElementById("cart-body");
+  const totalEl = document.getElementById("total");
+  const searchEl = document.getElementById("search");
+  const submitBtn = document.getElementById("submit-btn");
+
+  // display only: the server validates and recalculates everything
+  const money = n => n.toLocaleString(undefined,
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const lineTotal = l => (Number(l.cost) || 0) * l.qty;
+
+  function renderList() {
+    const q = searchEl.value.trim().toLowerCase();
+    listEl.replaceChildren();
+    PRODUCTS
+      .filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+      .slice(0, 50)
+      .forEach(p => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "list-group-item list-group-item-action d-flex justify-content-between";
+        const left = document.createElement("span");
+        left.textContent = p.name + " · " + p.sku;
+        const right = document.createElement("span");
+        right.className = "text-muted small";
+        right.textContent = p.stock + " in stock · cost " + money(Number(p.cost));
+        btn.append(left, right);
+        btn.addEventListener("click", () => addToCart(p.id));
+        listEl.appendChild(btn);
+      });
+  }
+
+  function addToCart(id) {
+    const line = cart.find(l => l.id === id);
+    if (line) { line.qty += 1; }
+    else { cart.push({ id, qty: 1, cost: byId[id].cost }); }
+    renderCart();
+  }
+
+  function updateTotal() {
+    totalEl.textContent = money(cart.reduce((sum, l) => sum + lineTotal(l), 0));
+    submitBtn.disabled = cart.length === 0;
+  }
+
+  function renderCart() {
+    cartBody.replaceChildren();
+    cart.forEach(line => {
+      const p = byId[line.id];
+      const tr = document.createElement("tr");
+
+      const nameTd = document.createElement("td");
+      nameTd.textContent = p.name;
+      const idInput = document.createElement("input");
+      idInput.type = "hidden"; idInput.name = "product_id"; idInput.value = p.id;
+      nameTd.appendChild(idInput);
+
+      const qtyTd = document.createElement("td");
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number"; qtyInput.name = "quantity";
+      qtyInput.min = 1; qtyInput.value = line.qty;
+      qtyInput.className = "form-control form-control-sm";
+      qtyInput.style.width = "5.5rem";
+      qtyTd.appendChild(qtyInput);
+
+      const costTd = document.createElement("td");
+      const costInput = document.createElement("input");
+      costInput.type = "number"; costInput.name = "unit_cost";
+      costInput.min = 0; costInput.step = "0.01"; costInput.value = line.cost;
+      costInput.className = "form-control form-control-sm";
+      costInput.style.width = "7rem";
+      costTd.appendChild(costInput);
+
+      const totalTd = document.createElement("td");
+      totalTd.className = "text-end";
+      totalTd.textContent = money(lineTotal(line));
+
+      const rmTd = document.createElement("td");
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "btn btn-outline-danger btn-sm";
+      rm.textContent = "×";
+      rm.addEventListener("click", () => { cart = cart.filter(l => l !== line); renderCart(); });
+      rmTd.appendChild(rm);
+
+      const refresh = () => { totalTd.textContent = money(lineTotal(line)); updateTotal(); };
+      qtyInput.addEventListener("input", () => {
+        const v = parseInt(qtyInput.value, 10);
+        if (!isNaN(v) && v >= 1) { line.qty = v; refresh(); }
+      });
+      costInput.addEventListener("input", () => { line.cost = costInput.value; refresh(); });
+
+      tr.append(nameTd, qtyTd, costTd, totalTd, rmTd);
+      cartBody.appendChild(tr);
+    });
+    updateTotal();
+  }
+
+  // Pressing Enter inside a number box must not submit the purchase by accident
+  document.getElementById("purchase-form").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") e.preventDefault();
+  });
+
+  searchEl.addEventListener("input", renderList);
+  renderList();
+  renderCart();
+</script>
+{% endblock %}

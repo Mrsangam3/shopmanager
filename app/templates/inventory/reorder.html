@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Reorder report · ShopManager{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="mb-0">Reorder report</h4>
+    <div class="text-muted small">{{ total }} item{{ '' if total == 1 else 's' }} at or below reorder level</div>
+  </div>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('purchases.new_purchase') }}">Receive stock</a>
+</div>
+
+{% for supplier, items in groups %}
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-white">
+    {% if supplier %}
+      <strong>{{ supplier.name }}</strong>
+      <span class="text-muted small ms-2">
+        {{ supplier.phone or '' }}{{ ' · ' if supplier.phone and supplier.email }}{{ supplier.email or '' }}
+      </span>
+    {% else %}
+      <strong>No supplier on record</strong>
+      <span class="text-muted small ms-2">never received through a purchase</span>
+    {% endif %}
+  </div>
+  <table class="table table-sm mb-0 align-middle">
+    <thead>
+      <tr><th>SKU</th><th>Name</th><th>Category</th>
+          <th class="text-end">In stock</th><th class="text-end">Reorder at</th>
+          <th class="text-end">Suggested order</th></tr>
+    </thead>
+    <tbody>
+      {% for row in items %}
+      {% set p = row.product %}
+      <tr>
+        <td>{{ p.sku }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.category.name if p.category else '—' }}</td>
+        <td class="text-end {{ 'text-danger fw-bold' if p.quantity == 0 }}">{{ p.quantity }}</td>
+        <td class="text-end">{{ p.reorder_level }}</td>
+        <td class="text-end fw-semibold">{{ row.suggested }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-success">Everything is above its reorder level. Nothing to order 🎉</div>
+{% endfor %}
+{% endblock %}

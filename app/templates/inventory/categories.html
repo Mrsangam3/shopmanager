@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Categories · ShopManager{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <h4>Categories</h4>
+    <table class="table table-sm bg-white align-middle">
+      <thead><tr><th>Name</th><th>Products</th><th></th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>{{ c.products|length }}</td>
+          <td class="text-end">
+            <form method="post" action="{{ url_for('inventory.delete_category', category_id=c.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-outline-danger btn-sm">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-muted">No categories yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm"><div class="card-body">
+      <h5>Add category</h5>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input class="form-control mb-3" name="name" placeholder="e.g. Beverages" required>
+        <button class="btn btn-primary w-100">Add</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

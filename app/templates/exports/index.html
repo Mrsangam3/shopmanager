@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Exports · ShopManager{% endblock %}
+{% block content %}
+<h4 class="mb-1">Export data</h4>
+<p class="text-muted">
+  Download CSV files for Excel or Google Sheets. Exports include cost prices,
+  so they are limited to owners and managers.
+</p>
+
+<div class="row g-3">
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100"><div class="card-body d-flex flex-column">
+      <h5>Inventory</h5>
+      <p class="text-muted small flex-grow-1">
+        Every product, including archived ones, with price, cost, stock level and low-stock status.
+      </p>
+      <a class="btn btn-primary" href="{{ url_for('exports.inventory_csv') }}">Download inventory</a>
+    </div></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h5>Sales</h5>
+      <p class="text-muted small">One row per item sold, with cost and profit per line.</p>
+      <form method="get" action="{{ url_for('exports.sales_csv') }}">
+        <label class="form-label small mb-0">From</label>
+        <input type="date" name="from" class="form-control mb-2" value="{{ default_from }}" max="{{ today }}" required>
+        <label class="form-label small mb-0">To</label>
+        <input type="date" name="to" class="form-control mb-3" value="{{ today }}" max="{{ today }}" required>
+        <button class="btn btn-primary w-100">Download sales</button>
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h5>Purchases</h5>
+      <p class="text-muted small">One row per item received from suppliers.</p>
+      <form method="get" action="{{ url_for('exports.purchases_csv') }}">
+        <label class="form-label small mb-0">From</label>
+        <input type="date" name="from" class="form-control mb-2" value="{{ default_from }}" max="{{ today }}" required>
+        <label class="form-label small mb-0">To</label>
+        <input type="date" name="to" class="form-control mb-3" value="{{ today }}" max="{{ today }}" required>
+        <button class="btn btn-primary w-100">Download purchases</button>
+      </form>
+    </div></div>
+  </div>
+
+</div>
+<p class="text-muted small mt-3">Date ranges can cover at most 366 days. Times are shown in the shop's time zone.</p>
+{% endblock %}
