@@ -3,9 +3,12 @@ import os
 
 def _database_url():
     url = os.environ.get("DATABASE_URL", "sqlite:///shop.db")
-    # some hosts hand out "postgres://", which SQLAlchemy 2 no longer accepts
+    # some hosts hand out "postgres://", which SQLAlchemy no longer accepts
     if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+        url = "postgresql://" + url[len("postgres://"):]
+    # name the driver explicitly (psycopg 3) instead of relying on a default
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
     return url
 
 
