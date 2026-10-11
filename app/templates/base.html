@@ -11,6 +11,7 @@
   <div class="container">
     <a class="navbar-brand" href="{{ url_for('main.index') }}">ShopManager</a>
     {% if current_user.is_authenticated %}
+    {% set is_manager = current_user.has_role('owner', 'manager') %}
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#main-nav" aria-controls="main-nav"
             aria-expanded="false" aria-label="Toggle navigation">
@@ -18,27 +19,73 @@
     </button>
     <div class="collapse navbar-collapse" id="main-nav">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('inventory.products') }}">Inventory</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('sales.new_sale') }}">New sale</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('sales.history') }}">Sales</a></li>
-        {% if current_user.has_role('owner', 'manager') %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('purchases.new_purchase') }}">Receive stock</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('purchases.history') }}">Purchases</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('purchases.suppliers') }}">Suppliers</a></li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('inventory.reorder') }}">Reorder
+          <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        </li>
+
+        {% if is_manager %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            Inventory
             {% if low_stock_count %}<span class="badge bg-danger">{{ low_stock_count }}</span>{% endif %}
           </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('inventory.products') }}">Products</a></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('inventory.reorder') }}">Reorder report
+                {% if low_stock_count %}<span class="badge bg-danger">{{ low_stock_count }}</span>{% endif %}
+              </a>
+            </li>
+            <li><a class="dropdown-item" href="{{ url_for('purchases.suppliers') }}">Suppliers</a></li>
+          </ul>
         </li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics.overview') }}">Analytics</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('exports.index') }}">Exports</a></li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('inventory.products') }}">Inventory</a>
+        </li>
         {% endif %}
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">Sales</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('sales.new_sale') }}">New sale</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('sales.history') }}">Sales history</a></li>
+          </ul>
+        </li>
+
+        {% if is_manager %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">Purchases</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('purchases.new_purchase') }}">Receive stock</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('purchases.history') }}">Purchase history</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">Reports</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('analytics.overview') }}">Analytics</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('exports.index') }}">Exports</a></li>
+          </ul>
+        </li>
+        {% endif %}
+
         {% if current_user.has_role('owner') %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.employees') }}">Employees</a></li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.employees') }}">Employees</a>
+        </li>
         {% endif %}
       </ul>
-      <span class="navbar-text me-lg-3 mb-2 mb-lg-0">{{ current_user.name }} ({{ current_user.role }})</span>
+
+      <span class="navbar-text me-lg-3 mb-2 mb-lg-0 text-nowrap">
+        {{ current_user.name }}
+        <span class="badge text-bg-secondary">{{ current_user.role }}</span>
+      </span>
       <form method="post" action="{{ url_for('auth.logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-outline-light btn-sm">Logout</button>
